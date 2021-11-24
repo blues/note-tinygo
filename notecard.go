@@ -361,7 +361,7 @@ func (context *Context) Response() (rsp map[string]interface{}, err error) {
 // Transaction performs a card transaction with a JSON structure
 func (context *Context) Transaction(req map[string]interface{}) (rsp map[string]interface{}, err error) {
 
-	fmt.Printf("T1\n")
+	fmt.Printf("T1xxx\n")
 	time.Sleep(3 * time.Second)
 	// Handle the special case where we are just processing a response
 	var reqJSON []byte

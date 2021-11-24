@@ -372,10 +372,10 @@ func (context *Context) Transaction(req map[string]interface{}) (rsp map[string]
 	} else {
 
 		// Marshal the request to JSON
-		fmt.Printf("T2\n")
+		fmt.Printf("About to marshal:\n%v\n", req)
 		time.Sleep(3 * time.Second)
 		reqJSON, err = json.Marshal(req)
-		fmt.Printf("T3\n")
+		fmt.Printf("Marshaled with error %s\n", err)
 		time.Sleep(3 * time.Second)
 		if err != nil {
 			err = fmt.Errorf("error marshaling request for module: %s", err)

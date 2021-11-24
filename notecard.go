@@ -361,8 +361,6 @@ func (context *Context) Response() (rsp map[string]interface{}, err error) {
 // Transaction performs a card transaction with a JSON structure
 func (context *Context) Transaction(req map[string]interface{}) (rsp map[string]interface{}, err error) {
 
-	fmt.Printf("T1xxx\n")
-	time.Sleep(3 * time.Second)
 	// Handle the special case where we are just processing a response
 	var reqJSON []byte
 	if req == nil {
@@ -372,11 +370,7 @@ func (context *Context) Transaction(req map[string]interface{}) (rsp map[string]
 	} else {
 
 		// Marshal the request to JSON
-		fmt.Printf("About to marshal:\n%v\n", req)
-		time.Sleep(3 * time.Second)
 		reqJSON, err = json.Marshal(req)
-		fmt.Printf("Marshaled with error %s\n", err)
-		time.Sleep(3 * time.Second)
 		if err != nil {
 			err = fmt.Errorf("error marshaling request for module: %s", err)
 			return
@@ -386,8 +380,6 @@ func (context *Context) Transaction(req map[string]interface{}) (rsp map[string]
 
 	// Perform the transaction
 	rspJSON, err2 := context.TransactionJSON(reqJSON)
-	fmt.Printf("T4\n")
-	time.Sleep(3 * time.Second)
 	if err2 != nil {
 		err = fmt.Errorf("error from TransactionJSON: %s", err2)
 		return
@@ -414,35 +406,23 @@ func (context *Context) TransactionJSON(reqJSON []byte) (rspJSON []byte, err err
 
 	// Make sure that it is valid JSON, because the transports won't validate this
 	// and they may misbehave if they do not get a valid JSON response back.
-	fmt.Printf("TJ1\n")
-	time.Sleep(3 * time.Second)
 	err = json.Unmarshal(reqJSON, &req)
-	fmt.Printf("TJ2\n")
-	time.Sleep(3 * time.Second)
 	if err != nil {
 		return
 	}
 
 	// If this is a hub.set, generate a user agent object if one hasn't already been supplied
-	fmt.Printf("TJ3\n")
-	time.Sleep(3 * time.Second)
 	if !context.DisableUA && (req["req"] == "hub.set" || req["cmd"] == "hub.set") && req["body"] == nil {
-		fmt.Printf("TJ4\n")
-		time.Sleep(3 * time.Second)
 		ua := context.UserAgent()
 		if ua != nil {
 			req["body"] = &ua
 			reqJSON, _ = json.Marshal(req)
 		}
 	}
-	fmt.Printf("TJ5\n")
-	time.Sleep(3 * time.Second)
 
 	// Determine whether or not a response will be expected from the notecard by
 	// examining the req and cmd fields
 	noResponseRequested = req["req"] == "" && req["cmd"] != ""
-	fmt.Printf("TJ6\n")
-	time.Sleep(3 * time.Second)
 
 	// Make sure that the JSON has a single \n terminator
 	for {
@@ -456,11 +436,7 @@ func (context *Context) TransactionJSON(reqJSON []byte) (rspJSON []byte, err err
 		}
 		break
 	}
-	fmt.Printf("TJ7\n")
-	time.Sleep(3 * time.Second)
 	reqJSON = []byte(string(reqJSON) + "\n")
-	fmt.Printf("TJ8\n")
-	time.Sleep(3 * time.Second)
 
 	// Debug
 	if context.Debug {
@@ -468,8 +444,6 @@ func (context *Context) TransactionJSON(reqJSON []byte) (rspJSON []byte, err err
 		j, _ = json.Marshal(req)
 		fmt.Printf("%s\n", string(j))
 	}
-	fmt.Printf("TJ9\n")
-	time.Sleep(3 * time.Second)
 
 	// Only one caller at a time accessing the I/O port
 	transLock.Lock()

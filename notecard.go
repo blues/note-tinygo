@@ -5,7 +5,6 @@
 package tinynote
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -35,9 +34,13 @@ var SerialTimeoutMs = 10000
 // It must be 1-253 bytes as per spec (which allows space for the 2-byte header in a 255-byte read)
 const CardI2CMax = 253
 
-// I/O functions
+// I2CTxFn is the function to write and read from the I2C Port
 type I2CTxFn func(i2cAddress uint16, writebuf []byte, readbuf []byte) (err error)
+
+// UARTReadFn is the function to read from the UART port
 type UARTReadFn func(data []byte) (n int, err error)
+
+// UARTWriteFn is the function to write to the UART port
 type UARTWriteFn func(data []byte) (n int, err error)
 
 // The notecard is a real-time device that has a fixed size interrupt buffer.  We can push data
@@ -370,11 +373,7 @@ func (context *Context) Transaction(req map[string]interface{}) (rsp map[string]
 	} else {
 
 		// Marshal the request to JSON
-		reqJSON, err = json.Marshal(req)
-		if err != nil {
-			err = fmt.Errorf("error marshaling request for module: %s", err)
-			return
-		}
+		reqJSON, _ = ObjectToJSON(req)
 
 	}
 
@@ -386,7 +385,7 @@ func (context *Context) Transaction(req map[string]interface{}) (rsp map[string]
 	}
 
 	// Unmarshal for convenience of the caller
-	err = json.Unmarshal(rspJSON, &rsp)
+	rsp, err = JSONToObject(rspJSON)
 	if err != nil {
 		err = fmt.Errorf("error unmarshaling reply from module: %s %s", err, ErrCardIo)
 		return
@@ -406,7 +405,7 @@ func (context *Context) TransactionJSON(reqJSON []byte) (rspJSON []byte, err err
 
 	// Make sure that it is valid JSON, because the transports won't validate this
 	// and they may misbehave if they do not get a valid JSON response back.
-	err = json.Unmarshal(reqJSON, &req)
+	req, err = JSONToObject(reqJSON)
 	if err != nil {
 		return
 	}
@@ -416,7 +415,7 @@ func (context *Context) TransactionJSON(reqJSON []byte) (rspJSON []byte, err err
 		ua := context.UserAgent()
 		if ua != nil {
 			req["body"] = &ua
-			reqJSON, _ = json.Marshal(req)
+			reqJSON, _ = ObjectToJSON(req)
 		}
 	}
 
@@ -441,7 +440,7 @@ func (context *Context) TransactionJSON(reqJSON []byte) (rspJSON []byte, err err
 	// Debug
 	if context.Debug {
 		var j []byte
-		j, _ = json.Marshal(req)
+		j, _ = ObjectToJSON(req)
 		fmt.Printf("%s\n", string(j))
 	}
 
@@ -474,8 +473,11 @@ func (context *Context) TransactionJSON(reqJSON []byte) (rspJSON []byte, err err
 	// Decode the response to create an error if the transaction returned an error.  We
 	// do this because it's SUPER inconvenient to always be checking for a response error
 	// vs an error on the transaction itself
-	var rsp map[string]interface{}
-	if err == nil && json.Unmarshal(rspJSON, &rsp) == nil && rsp["err"] != "" {
+	rsp := map[string]interface{}{}
+	if err == nil {
+		rsp, err = JSONToObject(rspJSON)
+	}
+	if err == nil && rsp["err"] != "" {
 		if req["req"] == "" {
 			err = fmt.Errorf("%s", rsp["err"])
 		} else {

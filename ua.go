@@ -9,8 +9,8 @@ import (
 	"runtime"
 )
 
-// Someday when the machine package supports finding the characteristics
-// of the machine, this is the place where we'd provide it.
+// UserAgent is for Someday when the machine package supports finding the
+// characteristics of the machine, this is the place where we'd provide it.
 func (context *Context) UserAgent() (ua map[string]interface{}) {
 
 	ua = map[string]interface{}{}

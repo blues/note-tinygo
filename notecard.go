@@ -379,8 +379,10 @@ func (context *Context) Transaction(req map[string]interface{}) (rsp map[string]
 
 	// Perform the transaction
 	rspJSON, err2 := context.TransactionJSON(reqJSON)
+	fmt.Printf("OZZIE '%s'\n", err2)
 	if err2 != nil {
 		err = fmt.Errorf("error from TransactionJSON: %s", err2)
+		fmt.Printf("OZZIE2 '%s'\n", err)
 		return
 	}
 

@@ -57,7 +57,7 @@ func main() {
     notecard, err := tinynote.OpenI2C(tinynote.DefaultI2CAddress, i2cTxFn)
     if err != nil {
         fmt.Printf("error opening notecard i2c port: %s\n", err)
-		return
+        return
     }
 
     // Enable trace output so we can visualize requests/responses

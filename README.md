@@ -24,4 +24,57 @@ If you don't see your OS and architecture supported, please file an issue and we
 ## Dependencies
 - Install tinygo and the tinygo tools [(here)](https://tinygo.org/getting-started/install/)
 
+## Example
+```golang
+package main
+
+import (
+    "fmt"
+    "machine"
+    "time"
+
+    tinynote "github.com/blues/note-tinygo"
+)
+
+func main() {
+
+    // Use default configuration of I2C                                                                                 
+    machine.I2C0.Configure(machine.I2CConfig{})
+
+    // Create a function for this machine type that performs I2C I/O                                                    
+    i2cTxFn := func(addr uint16, wb []byte, rb []byte) (err error) {
+        return machine.I2C0.Tx(addr, wb, rb)
+    }
+
+    // Open an I2C channel to the Notecard, supplying the I2C I/O function                                              
+    notecard, err := tinynote.OpenI2C(tinynote.DefaultI2CAddress, i2cTxFn)
+    if err != nil {
+        fmt.Printf("error opening notecard i2c port: %s\n", err)
+        return
+    }
+
+    // Enable trace output so we can visualize requests/responses                                                       
+    notecard.DebugOutput(true)
+
+    // Disable Notecard sync                                                                                            
+    req := tinynote.NewRequest("hub.set")
+    req["mode"] = "off"
+    err = notecard.Request(req)
+    if err != nil {
+        fmt.Printf("%s: %s\n", req["req"], err)
+    }
+
+    // Enter a loop that performs a harmless Notecard transaction                                                       
+    for {
+        time.Sleep(time.Second * 2)
+        req := tinynote.NewRequest("card.version")
+        rsp, err := notecard.RequestResponse(req)
+        if tinynote.IsError(err, rsp) {
+            fmt.Printf("%s: %s\n", req["req"], tinynote.ErrorString(err, rsp))
+            continue
+        }
+    }
+
+}
+
 ```

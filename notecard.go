@@ -479,11 +479,11 @@ func (context *Context) TransactionJSON(reqJSON []byte) (rspJSON []byte, err err
 	if err == nil {
 		rsp, err = JSONToObject(rspJSON)
 	}
-	if err == nil && rsp["err"] != "" {
+	if IsError(err, rsp) {
 		if req["req"] == "" {
-			err = fmt.Errorf("%s", rsp["err"])
+			err = fmt.Errorf("%s", ErrorString(err, rsp))
 		} else {
-			err = fmt.Errorf("%s: %s", req["req"], rsp["err"])
+			err = fmt.Errorf("%s: %s", req["req"], ErrorString(err, rsp))
 		}
 	}
 
@@ -675,5 +675,70 @@ func cardTransactionI2C(context *Context, noResponse bool, reqJSON []byte) (rspJ
 	}
 
 	// Done
+	return
+}
+
+// IsError tests to see if a response contains an error
+func IsError(err error, rsp map[string]interface{}) bool {
+	if err != nil {
+		return true
+	}
+	if rsp == nil {
+		return false
+	}
+	if rsp["err"] == nil {
+		return false
+	}
+	if rsp["err"] == "" {
+		return false
+	}
+	return true
+}
+
+// ErrorString returns the error within a response
+func ErrorString(err error, rsp map[string]interface{}) string {
+	if err != nil {
+		return fmt.Sprintf("%s", err)
+	}
+	if !IsError(err, rsp) {
+		return ""
+	}
+	return rsp["err"].(string)
+}
+
+// ErrorContains tests to see if an error contains an error keyword that we might expect
+func ErrorContains(err error, errKeyword string) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(fmt.Sprintf("%s", err), errKeyword)
+}
+
+// ErrorClean removes all error keywords from an error string
+func ErrorClean(err error) error {
+	errstr := fmt.Sprintf("%s", err)
+	for {
+		left := strings.SplitN(errstr, "{", 2)
+		if len(left) == 1 {
+			break
+		}
+		errstr = left[0]
+		b := strings.SplitN(left[1], "}", 2)
+		if len(b) > 1 {
+			errstr += strings.TrimPrefix(b[1], " ")
+		}
+	}
+	return fmt.Errorf(errstr)
+}
+
+// ErrorJSON returns a JSON object with nothing but an error code, and with an optional message
+func ErrorJSON(message string, err error) (rspJSON []byte) {
+	if message == "" {
+		rspJSON = []byte(fmt.Sprintf("{\"err\":\"%q\"}", err))
+	} else if err == nil {
+		rspJSON = []byte(fmt.Sprintf("{\"err\":\"%q\"}", message))
+	} else {
+		rspJSON = []byte(fmt.Sprintf("{\"err\":\"%q: %q\"}", message, err))
+	}
 	return
 }

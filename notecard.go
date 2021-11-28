@@ -414,7 +414,7 @@ func (context *Context) TransactionJSON(reqJSON []byte) (rspJSON []byte, err err
 	if !context.DisableUA && (req["req"] == "hub.set" || req["cmd"] == "hub.set") && req["body"] == nil {
 		ua := context.UserAgent()
 		if ua != nil {
-			req["body"] = &ua
+			req["body"] = ua
 			reqJSON, _ = ObjectToJSON(req)
 		}
 	}
